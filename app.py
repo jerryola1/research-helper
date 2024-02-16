@@ -54,3 +54,44 @@ full_text = "\n".join(line for line in full_text.splitlines("\n") if line)
 print("Total number of characters in the papers: ", len(full_text))
 
 # Split the text into chunck
+text_splitter = RecursiveCharachterSplitter(chunk_size=500, chunk_overlap=50)
+paper_chunks = text_splitter.create_document([full_text])
+
+#3. create Qdrant vector store and store embeddings
+qdrant = Qdrant.from_documents(
+    documents=paper_chunks,
+    embedding= GPT4AllEmbeddings(),
+    path="./tmp/local_qdrant",
+    collection_name="arxiv_papers",
+)
+retreival = qdrant.as_retrieval()
+
+# 4. Define prompt template and initialize Ollama
+template = """Answer the following questions based on only the given context
+{context}
+Question: {question}
+"""
+prompt = ChatPromptTemplate.from_template(template)
+
+# initialize Ollama
+ollama_llm = "llama2:7b-chat"
+model = ChatOllama(model=ollama_llm)
+
+# Define the processing chanin
+chain = (
+    RunnableParallel({"context": retrieval, "question": RunnablePassthrough()})
+    | prompt
+    | model
+    | StrOutputparser()
+)
+
+# Add typing for input
+class Question(BaseModel):
+    __root__: str
+
+# Apply input type to the chain
+chain = chain.with_type(input_type=Question)
+
+# Ask a question
+result = chain.run("Explain about vision enhancing LLMs")
+print(result)
