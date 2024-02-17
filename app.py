@@ -6,9 +6,9 @@ from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_community.chat_models import ChatOllama
 from langchain.prompts import ChatPromptTemplate
 from langchain.pydantic_v1 import BaseModel
-from langchain.schema.output_parser import StrOutputparser
+from langchain.schema.output_parser import StrOutputParser
 from langchain.schema.runnable import RunnableParallel, RunnablePassthrough
-from langchain.text_splitter import RecursiveCharachterSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import GPT4AllEmbeddings 
 
 # 1. Search arxiv for papers and download them
@@ -18,7 +18,7 @@ if not os.path.exists(dirpath):
 
 # search arxiv for papers related to "LLM"
 client = arxiv.Client()
-search = client.search(
+search = arxiv.search(
     query="LLM", 
     max_results=5,
     sort_order=arxiv.SortOrder.Descending
