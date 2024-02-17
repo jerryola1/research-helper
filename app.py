@@ -18,7 +18,7 @@ if not os.path.exists(dirpath):
 
 # search arxiv for papers related to "LLM"
 client = arxiv.Client()
-search = arxiv.search(
+search = arxiv.Search(
     query="LLM", 
     max_results=5,
     sort_order=arxiv.SortOrder.Descending
@@ -50,12 +50,12 @@ for paper in papers:
     full_text += paper.page_content
 
 # Remove empty lines and join lines into a single string
-full_text = "\n".join(line for line in full_text.splitlines("\n") if line)
+full_text = " ".join(line for line in full_text.splitlines() if line)
 print("Total number of characters in the papers: ", len(full_text))
 
 # Split the text into chunck
-text_splitter = RecursiveCharachterSplitter(chunk_size=500, chunk_overlap=50)
-paper_chunks = text_splitter.create_document([full_text])
+text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+paper_chunks = text_splitter.create_documents([full_text])
 
 #3. create Qdrant vector store and store embeddings
 qdrant = Qdrant.from_documents(
@@ -64,10 +64,10 @@ qdrant = Qdrant.from_documents(
     path="./tmp/local_qdrant",
     collection_name="arxiv_papers",
 )
-retreival = qdrant.as_retrieval()
+retreival = qdrant.as_retriever()
 
 # 4. Define prompt template and initialize Ollama
-template = """Answer the following questions based on only the given context
+template = """Answer the following questions based on only the given context:
 {context}
 Question: {question}
 """
@@ -79,10 +79,10 @@ model = ChatOllama(model=ollama_llm)
 
 # Define the processing chanin
 chain = (
-    RunnableParallel({"context": retrieval, "question": RunnablePassthrough()})
+    RunnableParallel({"context": retreival, "question": RunnablePassthrough()})
     | prompt
     | model
-    | StrOutputparser()
+    | StrOutputParser()
 )
 
 # Add typing for input
@@ -90,8 +90,8 @@ class Question(BaseModel):
     __root__: str
 
 # Apply input type to the chain
-chain = chain.with_type(input_type=Question)
+chain = chain.with_types(input_type=Question)
 
 # Ask a question
-result = chain.run("Explain about vision enhancing LLMs")
+result = chain.invoke("Explain about vision enhancing LLMs")
 print(result)

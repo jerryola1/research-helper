@@ -1,1 +1,47 @@
+# Python environment
 .env
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+env.bak/
+venv.bak/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Development tools
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-workspace
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Project specific
+arxiv_papers/
+tmp/
+*.pdf  # If you're downloading PDFs and want to ignore them
+
+# Logs
+logs/
+*.log
+
+# Data files
+*.csv
+*.json
+*.xml
+
+# Database
+*.db
+*.sql
+*.sqlite
+
+# Others
+node_modules/
