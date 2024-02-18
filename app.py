@@ -12,6 +12,7 @@ from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import GPT4AllEmbeddings 
 import gradio as gr
 import urllib
+import re
 
 def download_pdf_with_retry(url, path, max_retries=5):
     retry_delay = 1  # start with 1 second delay
@@ -33,6 +34,12 @@ def download_pdf_with_retry(url, path, max_retries=5):
         # If the loop completes without returning, all retries have failed
         print(f"Failed to download after {max_retries} attempts.")
 
+def sanitize_filename(title):
+    """Sanitize the paper title to be used as a filename."""
+    sanitized = re.sub(r'[^a-zA-Z0-9 \n.]', '', title)  # Remove invalid characters
+    sanitized = sanitized.replace(' ', '_')  # Replace spaces with underscores
+    return sanitized
+
 
 
 # 1. Search arxiv for papers and download them
@@ -49,10 +56,21 @@ def process_papers(query, question_text):
         sort_order=arxiv.SortOrder.Descending
     )
 
+    # for result in client.results(search):
+    #     pdf_url = result.pdf_url
+    #     pdf_path = os.path.join(dirpath, f"{result.get_short_id()}.pdf")
+    #     download_pdf_with_retry(pdf_url, pdf_path)
+
     for result in client.results(search):
         pdf_url = result.pdf_url
-        pdf_path = os.path.join(dirpath, f"{result.get_short_id()}.pdf")
-        download_pdf_with_retry(pdf_url, pdf_path)
+        sanitized_title = sanitize_filename(result.title)
+        pdf_path = os.path.join(dirpath, f"{sanitized_title}.pdf")
+        
+        # Check if the file already exists
+        if not os.path.exists(pdf_path):
+            download_pdf_with_retry(pdf_url, pdf_path)
+        else:
+            print(f"File already exists: {pdf_path}")
 
     # Download and save the papers 
     # for result in client.results(search):
