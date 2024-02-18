@@ -2,45 +2,43 @@
 # Research Assistant Project
 
 ## Overview
-This project aims to automate the process of searching, downloading, and analyzing academic research papers. It uses the arXiv API to search for papers related to Large Language Models (LLM), downloads them, and processes their content to make it easily accessible and analyzable.
+This project automates the process of searching, downloading, and analyzing academic research papers. It leverages the arXiv API to search for papers related to Large Language Models (LLM), downloads them, processes their content, and provides an interactive interface to query the processed data.
 
 ## Features
 - **Automatic Paper Download**: Searches and downloads papers from arXiv based on specified criteria.
-- **Content Analysis**: Extracts and processes the content of downloaded papers, preparing them for further analysis.
-- **Embedding Generation**: Uses GPT-4-based embeddings to analyze the text data.
-- **Interactive Chat Model**: Enables querying the system about the content of the papers through an interactive chat interface.
+- **Content Analysis**: Extracts and processes the content of downloaded papers.
+- **Embedding Generation**: Uses GPT-4-based embeddings for text analysis.
+- **Interactive Query Interface**: Utilizes Gradio to provide a web interface for querying the system about the content of the papers.
 
 ## Technologies Used
 - Python 3
-- arXiv API for paper search and download
-- `langchain_community` and `langchain` libraries for processing and embeddings
+- arXiv API
+- `langchain_community` and `langchain` libraries
 - Qdrant for vector storage and retrieval
+- Gradio for creating interactive web interfaces
+
+## New Updates
+- **Enhanced Query Capability**: The number of papers to download can now be specified, allowing for more extensive research.
+- **Gradio Interface**: A Gradio interface has been added to enable easy querying through a web interface. Users can enter a search query and a question, and the system will provide answers based on the downloaded papers.
 
 ## Setup and Installation
-Ensure you have Python 3 installed on your system. Then, install the required Python packages:
+Ensure Python 3 is installed. Install the required packages:
 
 ```bash
-pip install arxiv langchain_community
-```
-
-Clone this repository and navigate into the project directory:
-
-```bash
-git clone https://github.com/jerryola1/research-helper.git
-cd research-helper
+pip install arxiv langchain_community gradio
 ```
 
 ## Usage
-To run the project, execute the following command in the project directory:
+To run the project and launch the Gradio interface:
 
 ```bash
 python app.py
 ```
 
-This will start the process of searching for papers, downloading them, and preparing their content for analysis.
+This starts a local web server. Open the displayed URL in your web browser to interact with the application.
 
 ## Contributing
-Contributions to this project are welcome! Please fork the repository and submit a pull request with your proposed changes.
+Contributions are welcome. Please fork the repository and submit a pull request with your changes.
 
 ## License
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
