@@ -63,14 +63,19 @@ def process_papers(query, question_text):
 
     for result in client.results(search):
         pdf_url = result.pdf_url
+        paper_id = result.get_short_id()  # Extract paper ID
         sanitized_title = sanitize_filename(result.title)
-        pdf_path = os.path.join(dirpath, f"{sanitized_title}.pdf")
+        # Combine sanitized title and paper ID for a unique filename
+        pdf_filename = f"{sanitized_title}_{paper_id}.pdf"
+        pdf_path = os.path.join(dirpath, pdf_filename)
         
         # Check if the file already exists
         if not os.path.exists(pdf_path):
             download_pdf_with_retry(pdf_url, pdf_path)
+            print(f"Downloaded and saved: {pdf_path}")
         else:
-            print(f"File already exists: {pdf_path}")
+            print(f"File already exists and will not be downloaded again: {pdf_path}")
+
 
     # Download and save the papers 
     # for result in client.results(search):
