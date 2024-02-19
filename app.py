@@ -9,10 +9,13 @@ from langchain.pydantic_v1 import BaseModel
 from langchain.schema.output_parser import StrOutputParser
 from langchain.schema.runnable import RunnableParallel, RunnablePassthrough
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import GPT4AllEmbeddings 
+from langchain_community.embeddings import GPT4AllEmbeddings
+from langchain_community.document_loaders import PyPDFDirectoryLoader
 import gradio as gr
 import urllib
 import re
+import cProfile
+import pstats
 
 def download_pdf_with_retry(url, path, max_retries=5):
     retry_delay = 1  # start with 1 second delay
@@ -40,27 +43,21 @@ def sanitize_filename(title):
     sanitized = sanitized.replace(' ', '_')  # Replace spaces with underscores
     return sanitized
 
-
-
 # 1. Search arxiv for papers and download them
 def process_papers(query, question_text):
     dirpath = "arxiv_papers"
     if not os.path.exists(dirpath):
         os.makedirs(dirpath)
 
-    # search arxiv for papers related to "LLM"
+    # search arxiv for papers 
     client = arxiv.Client()
     search = arxiv.Search(
         query=query, 
-        max_results=10,
+        max_results=5,
         sort_order=arxiv.SortOrder.Descending
     )
 
-    # for result in client.results(search):
-    #     pdf_url = result.pdf_url
-    #     pdf_path = os.path.join(dirpath, f"{result.get_short_id()}.pdf")
-    #     download_pdf_with_retry(pdf_url, pdf_path)
-
+    # Download and save the papers 
     for result in client.results(search):
         pdf_url = result.pdf_url
         paper_id = result.get_short_id()  # Extract paper ID
@@ -76,21 +73,10 @@ def process_papers(query, question_text):
         else:
             print(f"File already exists and will not be downloaded again: {pdf_path}")
 
-
-    # Download and save the papers 
-    # for result in client.results(search):
-    #     while True:
-    #         try:
-    #             result.download_pdf(dirpath=dirpath)
-    #             print(f"-> Paper id {result.get_short_id()} with title {result.title} is downloaded")
-    #             break
-    #         except (FileNotFoundError, ConnectionResetError) as e:
-    #             print(f"Error downloading: {e}")
-    #             time.sleep(5)
-
     # 2. Load the papers, concatenate them, and split into chunks
     papers = []
-    loader = DirectoryLoader(dirpath, glob="./*.pdf", loader_cls=PyPDFLoader) 
+    # loader = DirectoryLoader(dirpath, glob="./*.pdf", loader_cls=PyPDFLoader)
+    loader = PyPDFDirectoryLoader("arxiv_papers/") 
     try:
         papers = loader.load()
     except Exception as e:
@@ -115,7 +101,9 @@ def process_papers(query, question_text):
         return 
     
     # Verify the embeddings process is working correctly
-    test_embedding = GPT4AllEmbeddings().embed_text(paper_chunks[0] if paper_chunks else "")
+    text_chunks = [paper.page_content for paper in paper_chunks]  
+    test_embedding = GPT4AllEmbeddings().embed_query(text_chunks[0] if text_chunks else "")
+
     if not test_embedding:
         print("Failed to generate embeddings for the test chunk.")
         return
@@ -167,5 +155,6 @@ iface = gr.Interface(
     outputs="text",
     description="Enter a search query and a question to ask about the papers.",
 )
+
 
 iface.launch(share=True)
