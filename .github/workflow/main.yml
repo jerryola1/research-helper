@@ -11,6 +11,13 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install Hugging Face CLI
+      run: pip install huggingface_hub
+      
+    - name: Log in to Hugging Face
+      run: huggingface-cli login ${{ secrets.HF_TOKEN }}
+
+
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
