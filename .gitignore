@@ -45,7 +45,5 @@ logs/
 
 # Others
 node_modules/
-.github/
 Researcher_Helper/
-.github/workflows/
 .gitattributes
