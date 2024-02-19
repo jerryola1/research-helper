@@ -1,9 +1,16 @@
 ---
-title: Research_helper
-app_file: app.py
+title: Researcher Helper
+emoji: 🐢
+colorFrom: yellow
+colorTo: purple
 sdk: gradio
-sdk_version: 4.19.0
+sdk_version: 4.19.1
+app_file: app.py
+pinned: false
+license: mit
 ---
+
+Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
 
 # Research Assistant Project
 
