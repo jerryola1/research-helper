@@ -3,13 +3,28 @@ name: Deploy to Hugging Face Spaces
 on:
   push:
     branches:
-      - main  # Set to your default branch
+      - main  
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+      name: Set up SSH
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      name: Add Hugging Face as a remote
+      run: |
+        git remote add huggingface https://huggingface.co/spaces/jerryola1/Researcher_Helper
+        git fetch --unshallow || true
+      
+      name: Push changes to Hugging Face
+      run: |
+        git push huggingface HEAD:main --force
 
     - name: Install Hugging Face CLI
       run: pip install huggingface_hub
