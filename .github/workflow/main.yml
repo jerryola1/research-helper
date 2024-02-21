@@ -16,7 +16,7 @@ jobs:
       with:
         python-version: '3.8'
 
-      nmae: Setup SSH
+      name: Setup SSH
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -31,7 +31,8 @@ jobs:
 
     - name: Add Hugging Face SSH remote and push
       run: |
-        git remote add huggingface git@hf.co:spaces/jerryola1/help_research.git || true
+        # Setup the Hugging Face space as a remote repository
+        git remote add huggingface git@hf.co:spaces/jerryola1/help_research.git
         git push huggingface HEAD:main --force
 
     # - name: Log in to Hugging Face
