@@ -1,3 +1,41 @@
+# name: Deploy to Hugging Face Spaces
+
+# on:
+#   push:
+#     branches:
+#       - main
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#     - uses: actions/checkout@v2
+
+#     - name: Set up Python
+#       uses: actions/setup-python@v2
+#       with:
+#         python-version: '3.8'
+
+#       name: Setup SSH
+#       uses: webfactory/ssh-agent@v0.5.3
+#       with:
+#         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+#     - name: Install dependencies
+#       run: |
+#         python -m pip install --upgrade pip
+#         pip install -r requirements.txt
+
+#     - name: Install Hugging Face CLI
+#       run: pip install huggingface_hub
+
+#     - name: Add Hugging Face SSH remote and push
+#       run: |
+#         # Setup the Hugging Face space as a remote repository
+#         git remote add huggingface git@hf.co:spaces/jerryola1/help_research.git
+#         git push huggingface HEAD:main --force
+
+
 name: Deploy to Hugging Face Spaces
 
 on:
@@ -16,11 +54,6 @@ jobs:
       with:
         python-version: '3.8'
 
-      name: Setup SSH
-      uses: webfactory/ssh-agent@v0.5.3
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
@@ -29,31 +62,16 @@ jobs:
     - name: Install Hugging Face CLI
       run: pip install huggingface_hub
 
-    - name: Add Hugging Face SSH remote and push
+    - name: Configure Git
       run: |
-        # Setup the Hugging Face space as a remote repository
-        git remote add huggingface git@hf.co:spaces/jerryola1/help_research.git
+        git config --global user.email "olagunjujeremiah@gmail.com"
+        git config --global user.name "Abayomi Olagunju"
+
+    - name: Add Hugging Face HTTPS remote and push
+      env:
+        HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      run: |
+        # Setup Hugging Face token for HTTPS push
+        git remote remove huggingface
+        git remote add huggingface https://$HF_TOKEN:@huggingface.co/spaces/jerryola1/help_research.git
         git push huggingface HEAD:main --force
-
-    # - name: Log in to Hugging Face
-    #   env:
-    #     HF_TOKEN: ${{ secrets.HF_TOKEN }}
-    #   run: huggingface-cli login ${{ secrets.HF_TOKEN }}
-
-    # - name: Configure git for Hugging Face
-    #   run: |
-    #     git config --global user.email "olagunjujeremiah@gmail.com"
-    #     git config --global user.name "jerryola1"
-    #     # This uses the Hugging Face token for HTTPS-based git operations
-    #     git config --global credential.helper 'store --file ~/.hf-git-credentials'
-    #     echo "https://huggingface.co:${{ secrets.HF_TOKEN }}@huggingface.co" > ~/.hf-git-credentials
-
-    # - name: Add Hugging Face as a remote and push changes
-    #   run: |
-    #     git remote add huggingface git@huggingface.co:jerryola1/Researcher_Helper.git || true
-    #     git fetch --unshallow || true
-    #     # Push changes
-    #     git push huggingface HEAD:main --force
-    #     # Cleanup credentials
-    #     git config --global --unset credential.helper
-    #     rm ~/.hf-git-credentials
