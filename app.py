@@ -153,7 +153,16 @@ iface = gr.Interface(
     fn=process_papers,
     inputs=["text", "text"],
     outputs="text",
-    description="Enter a search query and a question to ask about the papers.",
+    description=
+    """
+        This interface allows you to search for academic papers from arXiv based on a search query 
+    and then ask a question related to the content of these papers. It downloads the papers, 
+    processes them to extract text, and uses a language model to generate responses to your question. 
+    First, enter a search query to find papers related to your topic of interest. Then, ask a specific 
+    question about these papers. The system will attempt to provide an answer based on the content 
+    of the downloaded papers. Ideal for researchers, students, or anyone interested in gaining insights 
+    from scientific literature quickly.
+    """,
 )
 
 
