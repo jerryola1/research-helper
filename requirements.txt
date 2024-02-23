@@ -3,3 +3,4 @@ gradio
 langchain-community
 langchain
 pypdf
+gpt4all
