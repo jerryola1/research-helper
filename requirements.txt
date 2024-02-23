@@ -2,3 +2,4 @@ arxiv
 gradio
 langchain-community
 langchain
+pypdf
