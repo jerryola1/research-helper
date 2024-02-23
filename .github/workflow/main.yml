@@ -67,11 +67,12 @@ jobs:
         git config --global user.email "olagunjujeremiah@gmail.com"
         git config --global user.name "Abayomi Olagunju"
 
-    - name: Add Hugging Face HTTPS remote and push
+    - name: Login to Hugging Face CLI
       env:
         HF_TOKEN: ${{ secrets.HF_TOKEN }}
       run: |
-        # Setup Hugging Face token for HTTPS push
-        git remote remove huggingface
-        git remote add huggingface https://$HF_TOKEN:@huggingface.co/spaces/jerryola1/help_research.git
-        git push huggingface HEAD:main --force
+        echo $HF_TOKEN | huggingface-cli login
+
+    - name: Push to Hugging Face Spaces
+      run: |
+        git push --force https://$HF_TOKEN:@huggingface.co/spaces/jerryola1/help_research.git HEAD:main
