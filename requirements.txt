@@ -1,6 +1,9 @@
 arxiv
 gradio
+langchain-core
 langchain-community
 langchain
 pypdf
 gpt4all
+qdrant-client
+anyio
