@@ -1,3 +1,4 @@
 arxiv
 gradio
 langchain-community
+langchain
