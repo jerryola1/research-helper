@@ -16,6 +16,9 @@ import urllib
 import re
 import cProfile
 import pstats
+import torch
+
+device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def download_pdf_with_retry(url, path, max_retries=5):
     retry_delay = 1  # start with 1 second delay
@@ -42,6 +45,11 @@ def sanitize_filename(title):
     sanitized = re.sub(r'[^a-zA-Z0-9 \n.]', '', title)  # Remove invalid characters
     sanitized = sanitized.replace(' ', '_')  # Replace spaces with underscores
     return sanitized
+
+def generate_chunk_uid(title, paper_id, chunk_index):
+    """Generate a unique identifier for a text chunk."""
+    sanitized_title = re.sub(r'[^a-zA-Z0-9]', '', title)
+    return f"{sanitized_title}_{paper_id}_chunk{chunk_index}"
 
 # 1. Search arxiv for papers and download them
 def process_papers(query, question_text):
@@ -113,7 +121,8 @@ def process_papers(query, question_text):
         documents=paper_chunks,
         embedding= GPT4AllEmbeddings(),
         path="./tmp/local_qdrant",
-        collection_name="arxiv_papers",
+        # collection_name="arxiv_papers",
+        collection_name=os.getenv("QDRANT_COLLECTION_NAME"),
     )
     retreival = qdrant.as_retriever()
 
@@ -146,9 +155,6 @@ def process_papers(query, question_text):
     return result
 
 # # Ask a question
-# result = chain.invoke("Explain about vision enhancing LLMs")
-# print(result)
-
 iface = gr.Interface(
     fn=process_papers,
     inputs=["text", "text"],
