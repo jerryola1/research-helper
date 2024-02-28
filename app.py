@@ -14,11 +14,11 @@ from langchain_community.document_loaders import PyPDFDirectoryLoader
 import gradio as gr
 import urllib
 import re
-import cProfile
-import pstats
+from qdrant_client import QdrantClient
 import torch
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
+qdrant_client = QdrantClient(url='http://localhost:6333')
 
 def download_pdf_with_retry(url, path, max_retries=5):
     retry_delay = 1  # start with 1 second delay
@@ -50,6 +50,49 @@ def generate_chunk_uid(title, paper_id, chunk_index):
     """Generate a unique identifier for a text chunk."""
     sanitized_title = re.sub(r'[^a-zA-Z0-9]', '', title)
     return f"{sanitized_title}_{paper_id}_chunk{chunk_index}"
+
+def embeddings_exist(collection_name, chunk_uid, qdrant_client):
+    """
+    Check if embeddings for a given chunk UID already exist in Qdrant.
+    
+    Args:
+        collection_name (str): The name of the collection in Qdrant.
+        chunk_uid (str): The unique identifier of the text chunk.
+        qdrant_client: Instance of the Qdrant client for API interactions.
+    
+    Returns:
+        bool: True if the embedding exists, False otherwise.
+    """
+    try:
+        search_response = qdrant_client.search(
+            collection_name=collection_name,
+            query={"chunk_uid": chunk_uid},
+            top=1  # We only need to check if at least one result comes back
+        )
+        return len(search_response["hits"]) > 0
+    except Exception as e:
+        print(f"Error checking for embedding existence: {e}")
+        return False
+
+def store_embedding_in_qdrant(collection_name, chunk_uid, embedding, qdrant_client):
+    """
+    Store the embedding of a text chunk in the Qdrant database with its UID.
+    
+    Args:
+        collection_name (str): The name of the collection in Qdrant.
+        chunk_uid (str): The unique identifier of the text chunk.
+        embedding (list): The embedding vector of the text chunk.
+        qdrant_client: Instance of the Qdrant client for API interactions.
+    """
+    try:
+        # Adjust with the correct method and parameters according to your client library
+        qdrant_client.upsert_points(collection_name=collection_name, points=[{
+            "id": chunk_uid,
+            "vector": embedding.tolist(),  # Assuming embedding is a NumPy array
+        }])
+        print(f"Successfully stored embedding for {chunk_uid}.")
+    except Exception as e:
+        print(f"Error storing embedding in Qdrant: {e}")
 
 # 1. Search arxiv for papers and download them
 def process_papers(query, question_text):
@@ -83,38 +126,54 @@ def process_papers(query, question_text):
 
     # 2. Load the papers, concatenate them, and split into chunks
     papers = []
-    # loader = DirectoryLoader(dirpath, glob="./*.pdf", loader_cls=PyPDFLoader)
     loader = PyPDFDirectoryLoader("arxiv_papers/") 
     try:
         papers = loader.load()
     except Exception as e:
         print(f"Error loading papers: {e}")
-    print("Total number of papers loaded: ", len(papers))
 
-    # Combine all the pages in paper into a single string
-    full_text = ""
-    for paper in papers:
-        full_text += paper.page_content
-
-    # Remove empty lines and join lines into a single string
-    full_text = " ".join(line for line in full_text.splitlines() if line)
-    print("Total number of characters in the papers: ", len(full_text))
-
-    # Split the text into chunck
+    full_text = " ".join(paper.page_content for paper in papers)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     paper_chunks = text_splitter.create_documents([full_text])
-    # Check for empty paper chunks
-    if not paper_chunks:
-        print("No text chunks available for embedding.")
-        return 
-    
-    # Verify the embeddings process is working correctly
-    text_chunks = [paper.page_content for paper in paper_chunks]  
-    test_embedding = GPT4AllEmbeddings().embed_query(text_chunks[0] if text_chunks else "")
 
-    if not test_embedding:
-        print("Failed to generate embeddings for the test chunk.")
-        return
+    chunk_index = 0
+    for chunk in paper_chunks:
+        chunk_uid = generate_chunk_uid(sanitized_title, paper_id, chunk_index)
+        if not embeddings_exist('arxiv_papers', chunk_uid, qdrant_client):
+            # Generate and store embeddings if they don't exist
+            embedding = GPT4AllEmbeddings().embed_query(chunk.page_content)
+            store_embedding_in_qdrant('arxiv_papers', chunk_uid, embedding, qdrant_client)
+        else:
+            print(f"Embedding for chunk UID {chunk_uid} already exists. Skipping.")
+        chunk_index += 1
+
+    print("Total number of papers loaded: ", len(papers))
+
+    # # Combine all the pages in paper into a single string
+    # full_text = ""
+    # for paper in papers:
+    #     full_text += paper.page_content
+
+    # # Remove empty lines and join lines into a single string
+    # full_text = " ".join(line for line in full_text.splitlines() if line)
+    # print("Total number of characters in the papers: ", len(full_text))
+
+    # # Split the text into chunck
+    # text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    # paper_chunks = text_splitter.create_documents([full_text])
+    # # Check for empty paper chunks
+    # if not paper_chunks:
+    #     print("No text chunks available for embedding.")
+    #     return 
+    
+    # # Verify the embeddings process is working correctly
+    # text_chunks = [paper.page_content for paper in paper_chunks]  
+    # test_embedding = GPT4AllEmbeddings().embed_query(text_chunks[0] if text_chunks else "")
+
+    # if not test_embedding:
+    #     print("Failed to generate embeddings for the test chunk.")
+    #     return
+
 
     #3. create Qdrant vector store and store embeddings
     qdrant = Qdrant.from_documents(
