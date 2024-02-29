@@ -19,7 +19,7 @@ import cohere
 import qdrant_client
 from qdrant_client import QdrantClient
 from qdrant_client.http import models
-from qdrant_client.http.models import Batch
+from qdrant_client.http.models import Batch, PointStruct
 import torch
 
 load_dotenv()
@@ -61,7 +61,7 @@ def generate_chunk_uid(title, paper_id, chunk_index):
 
 def embeddings_exist(collection_name, chunk_uid, qdrant_client):
     """
-    Check if embeddings for a given chunk UID already exist in Qdrant.
+    Check if embeddings for a given chunk UID already exist in Qdrant by using the filter functionality.
     
     Args:
         collection_name (str): The name of the collection in Qdrant.
@@ -72,15 +72,24 @@ def embeddings_exist(collection_name, chunk_uid, qdrant_client):
         bool: True if the embedding exists, False otherwise.
     """
     try:
+        # Define a filter that matches points with the specified chunk_uid in their payload
+        filter_condition = {
+            "must": [
+                { "key": "chunk_uid", "match": { "value": chunk_uid } }
+            ]
+        }
+        # Perform a search with the filter, looking for at least one matching point
         search_response = qdrant_client.search(
             collection_name=collection_name,
-            query={"chunk_uid": chunk_uid},
+            filter=filter_condition,
             top=1  # We only need to check if at least one result comes back
         )
-        return len(search_response["hits"]) > 0
+        # Check if any points were returned in the search response
+        return len(search_response["result"]) > 0
     except Exception as e:
         print(f"Error checking for embedding existence: {e}")
         return False
+
 
 def store_embedding_in_qdrant(collection_name, chunk_uid, embedding, qdrant_client):
     """
@@ -93,11 +102,13 @@ def store_embedding_in_qdrant(collection_name, chunk_uid, embedding, qdrant_clie
         qdrant_client: Instance of the Qdrant client for API interactions.
     """
     try:
-        # Prepare the embeddings and IDs in the format expected by Qdrant
-        points_batch = models.Batch(ids=[chunk_uid], vectors=[embedding])
-        
-        qdrant_client.upsert(collection_name=collection_name, points=points_batch)
-        print(f"Successfully stored embedding for {chunk_uid}.")
+        # Ensure embedding is a list of floats
+        if isinstance(embedding, list) and all(isinstance(x, float) for x in embedding):
+            points_batch = Batch(ids=[chunk_uid], vectors=[embedding])
+            qdrant_client.upsert(collection_name=collection_name, points=points_batch)
+            print(f"Successfully stored embedding for {chunk_uid}.")
+        else:
+            print("Embedding format error: Embedding must be a list of floats.")
     except Exception as e:
         print(f"Error storing embedding in Qdrant: {e}")
 # 1. Search arxiv for papers and download them
