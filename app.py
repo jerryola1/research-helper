@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 import time
 import arxiv
 from langchain_community.vectorstores import Qdrant
@@ -14,11 +15,18 @@ from langchain_community.document_loaders import PyPDFDirectoryLoader
 import gradio as gr
 import urllib
 import re
+import cohere
+import qdrant_client
 from qdrant_client import QdrantClient
+from qdrant_client.http import models
+from qdrant_client.http.models import Batch
 import torch
 
+load_dotenv()
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
-qdrant_client = QdrantClient(url='http://localhost:6333')
+qdrant_client = QdrantClient(host='localhost', port=6333)
+cohere_api_key = os.getenv("COHERE_API_KEY")
+cohere_client = cohere.Client(api_key=cohere_api_key)
 
 def download_pdf_with_retry(url, path, max_retries=5):
     retry_delay = 1  # start with 1 second delay
@@ -85,15 +93,13 @@ def store_embedding_in_qdrant(collection_name, chunk_uid, embedding, qdrant_clie
         qdrant_client: Instance of the Qdrant client for API interactions.
     """
     try:
-        # Adjust with the correct method and parameters according to your client library
-        qdrant_client.upsert_points(collection_name=collection_name, points=[{
-            "id": chunk_uid,
-            "vector": embedding.tolist(),  # Assuming embedding is a NumPy array
-        }])
+        # Prepare the embeddings and IDs in the format expected by Qdrant
+        points_batch = models.Batch(ids=[chunk_uid], vectors=[embedding])
+        
+        qdrant_client.upsert(collection_name=collection_name, points=points_batch)
         print(f"Successfully stored embedding for {chunk_uid}.")
     except Exception as e:
         print(f"Error storing embedding in Qdrant: {e}")
-
 # 1. Search arxiv for papers and download them
 def process_papers(query, question_text):
     dirpath = "arxiv_papers"

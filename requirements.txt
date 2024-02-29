@@ -9,3 +9,4 @@ qdrant-client
 anyio
 requests
 urllib3
+cohere
