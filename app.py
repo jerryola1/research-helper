@@ -50,7 +50,7 @@ def download_pdf_with_retry(url, path, max_retries=5):
 
 def sanitize_filename(title):
     """Sanitize the paper title to be used as a filename."""
-    sanitized = re.sub(r'[^a-zA-Z0-9 \n.]', '', title)  # Remove invalid characters
+    sanitized = re.sub(r'[^a-zA-Z0-9 \n.]', '', title)  
     sanitized = sanitized.replace(' ', '_')  # Replace spaces with underscores
     return sanitized
 
