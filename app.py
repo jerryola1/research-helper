@@ -190,7 +190,8 @@ def process_papers(query, question_text):
     # if not test_embedding:
     #     print("Failed to generate embeddings for the test chunk.")
     #     return
-
+# new code
+    # KeyboardInterrupt
 
     #3. create Qdrant vector store and store embeddings
     qdrant = Qdrant.from_documents(
