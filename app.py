@@ -149,47 +149,47 @@ def process_papers(query, question_text):
     except Exception as e:
         print(f"Error loading papers: {e}")
 
-    full_text = " ".join(paper.page_content for paper in papers)
-    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    paper_chunks = text_splitter.create_documents([full_text])
+    # full_text = " ".join(paper.page_content for paper in papers)
+    # text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    # paper_chunks = text_splitter.create_documents([full_text])
 
-    chunk_index = 0
-    for chunk in paper_chunks:
-        chunk_uid = generate_chunk_uid(sanitized_title, paper_id, chunk_index)
-        if not embeddings_exist('arxiv_papers', chunk_uid, qdrant_client):
-            # Generate and store embeddings if they don't exist
-            embedding = GPT4AllEmbeddings().embed_query(chunk.page_content)
-            store_embedding_in_qdrant('arxiv_papers', chunk_uid, embedding, qdrant_client)
-        else:
-            print(f"Embedding for chunk UID {chunk_uid} already exists. Skipping.")
-        chunk_index += 1
+    # chunk_index = 0
+    # for chunk in paper_chunks:
+    #     chunk_uid = generate_chunk_uid(sanitized_title, paper_id, chunk_index)
+    #     if not embeddings_exist('arxiv_papers', chunk_uid, qdrant_client):
+    #         # Generate and store embeddings if they don't exist
+    #         embedding = GPT4AllEmbeddings().embed_query(chunk.page_content)
+    #         store_embedding_in_qdrant('arxiv_papers', chunk_uid, embedding, qdrant_client)
+    #     else:
+    #         print(f"Embedding for chunk UID {chunk_uid} already exists. Skipping.")
+    #     chunk_index += 1
 
     print("Total number of papers loaded: ", len(papers))
 
-    # # Combine all the pages in paper into a single string
-    # full_text = ""
-    # for paper in papers:
-    #     full_text += paper.page_content
+    # Combine all the pages in paper into a single string
+    full_text = ""
+    for paper in papers:
+        full_text += paper.page_content
 
-    # # Remove empty lines and join lines into a single string
-    # full_text = " ".join(line for line in full_text.splitlines() if line)
-    # print("Total number of characters in the papers: ", len(full_text))
+    # Remove empty lines and join lines into a single string
+    full_text = " ".join(line for line in full_text.splitlines() if line)
+    print("Total number of characters in the papers: ", len(full_text))
 
-    # # Split the text into chunck
-    # text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
-    # paper_chunks = text_splitter.create_documents([full_text])
-    # # Check for empty paper chunks
-    # if not paper_chunks:
-    #     print("No text chunks available for embedding.")
-    #     return 
+    # Split the text into chunck
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+    paper_chunks = text_splitter.create_documents([full_text])
+    # Check for empty paper chunks
+    if not paper_chunks:
+        print("No text chunks available for embedding.")
+        return 
     
-    # # Verify the embeddings process is working correctly
-    # text_chunks = [paper.page_content for paper in paper_chunks]  
-    # test_embedding = GPT4AllEmbeddings().embed_query(text_chunks[0] if text_chunks else "")
+    # Verify the embeddings process is working correctly
+    text_chunks = [paper.page_content for paper in paper_chunks]  
+    test_embedding = GPT4AllEmbeddings().embed_query(text_chunks[0] if text_chunks else "")
 
-    # if not test_embedding:
-    #     print("Failed to generate embeddings for the test chunk.")
-    #     return
+    if not test_embedding:
+        print("Failed to generate embeddings for the test chunk.")
+        return
 
     #3. create Qdrant vector store and store embeddings
     qdrant = Qdrant.from_documents(
