@@ -59,36 +59,36 @@ def generate_chunk_uid(title, paper_id, chunk_index):
     sanitized_title = re.sub(r'[^a-zA-Z0-9]', '', title)
     return f"{sanitized_title}_{paper_id}_chunk{chunk_index}"
 
-def embeddings_exist(collection_name, chunk_uid, qdrant_client):
-    """
-    Check if embeddings for a given chunk UID already exist in Qdrant by using the filter functionality.
+# def embeddings_exist(collection_name, chunk_uid, qdrant_client):
+#     """
+#     Check if embeddings for a given chunk UID already exist in Qdrant by using the filter functionality.
     
-    Args:
-        collection_name (str): The name of the collection in Qdrant.
-        chunk_uid (str): The unique identifier of the text chunk.
-        qdrant_client: Instance of the Qdrant client for API interactions.
+#     Args:
+#         collection_name (str): The name of the collection in Qdrant.
+#         chunk_uid (str): The unique identifier of the text chunk.
+#         qdrant_client: Instance of the Qdrant client for API interactions.
     
-    Returns:
-        bool: True if the embedding exists, False otherwise.
-    """
-    try:
-        # Define a filter that matches points with the specified chunk_uid in their payload
-        filter_condition = {
-            "must": [
-                { "key": "chunk_uid", "match": { "value": chunk_uid } }
-            ]
-        }
-        # Perform a search with the filter, looking for at least one matching point
-        search_response = qdrant_client.search(
-            collection_name=collection_name,
-            filter=filter_condition,
-            top=1  # We only need to check if at least one result comes back
-        )
-        # Check if any points were returned in the search response
-        return len(search_response["result"]) > 0
-    except Exception as e:
-        print(f"Error checking for embedding existence: {e}")
-        return False
+#     Returns:
+#         bool: True if the embedding exists, False otherwise.
+#     """
+#     try:
+#         # Define a filter that matches points with the specified chunk_uid in their payload
+#         filter_condition = {
+#             "must": [
+#                 { "key": "chunk_uid", "match": { "value": chunk_uid } }
+#             ]
+#         }
+#         # Perform a search with the filter, looking for at least one matching point
+#         search_response = qdrant_client.search(
+#             collection_name=collection_name,
+#             filter=filter_condition,
+#             top=1  # We only need to check if at least one result comes back
+#         )
+#         # Check if any points were returned in the search response
+#         return len(search_response["result"]) > 0
+#     except Exception as e:
+#         print(f"Error checking for embedding existence: {e}")
+#         return False
 
 
 def store_embedding_in_qdrant(collection_name, chunk_uid, embedding, qdrant_client):
