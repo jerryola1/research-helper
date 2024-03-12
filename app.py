@@ -220,6 +220,8 @@ def process_papers(query, question_text):
         | StrOutputParser()
     )
 
+# docs = retriever.get_relevant_documents("what did he say about ketanji brown jackson")
+
     # Add typing for input
     class Question(BaseModel):
         __root__: str
