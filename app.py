@@ -231,22 +231,53 @@ def process_papers(query, question_text):
     result = chain.invoke(question_text)
     return result
 
-# # Ask a question
-iface = gr.Interface(
-    fn=process_papers,
-    inputs=["text", "text"],
-    outputs="text",
-    description=
+# # # Ask a question
+# iface = gr.Interface(
+#     fn=process_papers,
+#     inputs=["text", "text"],
+#     outputs="text",
+#     description=
+#     """
+#         This interface allows you to search for academic papers from arXiv based on a search query 
+#     and then ask a question related to the content of these papers. It downloads the papers, 
+#     processes them to extract text, and uses a language model to generate responses to your question. 
+#     First, enter a search query to find papers related to your topic of interest. Then, ask a specific 
+#     question about these papers. The system will attempt to provide an answer based on the content 
+#     of the downloaded papers. Ideal for researchers, students, or anyone interested in gaining insights 
+#     from scientific literature quickly.
+#     """,
+# )
+
+
+# iface.launch(share=True)
+
+import streamlit as st
+
+
+
+# Set up the Streamlit app
+st.title("Ask a question")
+st.markdown(
     """
-        This interface allows you to search for academic papers from arXiv based on a search query 
+    This interface allows you to search for academic papers from arXiv based on a search query 
     and then ask a question related to the content of these papers. It downloads the papers, 
     processes them to extract text, and uses a language model to generate responses to your question. 
     First, enter a search query to find papers related to your topic of interest. Then, ask a specific 
     question about these papers. The system will attempt to provide an answer based on the content 
     of the downloaded papers. Ideal for researchers, students, or anyone interested in gaining insights 
     from scientific literature quickly.
-    """,
+    """
 )
 
+# Input fields
+search_query = st.text_input("Enter your search query")
+question = st.text_input("Ask a specific question about the papers")
 
-iface.launch(share=True)
+# Button to trigger the processing
+if st.button("Submit"):
+    if search_query and question:
+        answer = process_papers(search_query, question)
+        st.write(answer)
+    else:
+        st.write("Please provide both a search query and a question.")
+
