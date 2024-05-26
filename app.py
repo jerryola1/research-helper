@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 import time
-import arxiv
+#import arxiv
 from langchain_community.vectorstores import Qdrant
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from langchain_community.chat_models import ChatOllama
