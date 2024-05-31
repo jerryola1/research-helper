@@ -281,3 +281,14 @@ if st.button("Submit"):
     else:
         st.write("Please provide both a search query and a question.")
 
+# button to trigger the processing
+if st.button("Submit"):
+    # check if both search_query and question are provided
+    if search_query and question:
+        # process the papers with the provided search_query and question
+        answer = process_papers(search_query, question)
+        # display the answer
+        st.write(answer)
+    else:
+        # display a message to provide both fields
+        st.write("Please provide both a search query and a question.")
